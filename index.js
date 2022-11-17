@@ -28,7 +28,14 @@ function verifyJWT(req, res, next) {
 
     const token = authHeader.split(' ')[1];
 
-    next()
+    jwt.verify(token, process.env.ACCESS_TOKEN, function (err, decoded) {
+        if (err) {
+            return res.status(403).send({ message: 'forbidden access' })
+        }
+        req.decoded = decoded;
+        next();
+    })
+
 }
 
 async function run() {
@@ -106,6 +113,11 @@ async function run() {
         app.get('/bookings', verifyJWT, async (req, res) => {
             const email = req.query.email;
             console.log(req.headers.authorization);
+
+            const decodedEmail = req.decoded.email;
+            if (email !== decodedEmail) {
+                return res.status(403).send({ message: 'forbidden access' })
+            }
             const query = { email: email };
             const bookings = await bookingsCollection.find(query).toArray();
             res.send(bookings)
@@ -140,6 +152,12 @@ async function run() {
             }
             console.log(user);
             res.status(403).send({ accessToken: '' })
+        })
+
+        app.get('/users', async (req, res) => {
+            const query = {};
+            const users = await usersCollection.find(query).toArray();
+            res.send(users)
         })
 
         app.post('/users', async (req, res) => {
