@@ -147,14 +147,19 @@ async function run() {
             const query = { email: email };
             const user = await usersCollection.findOne(query);
             if (user) {
-                const token = jwt.sign({ email }, process.env.ACCESS_TOKEN, { expiresIn: '1h' });
+                const token = jwt.sign({ email }, process.env.ACCESS_TOKEN, { expiresIn: '1d' });
                 return res.send({ accessToken: token });
             }
             console.log(user);
             res.status(403).send({ accessToken: '' })
         })
 
-        app.get('/users', async (req, res) => {
+        app.get('/users', verifyJWT, async (req, res) => {
+            const decodedEmail = req.decoded.email;
+            const user = await usersCollection.findOne({ email: decodedEmail });
+            if (user?.role !== 'admin') {
+                return res.status(403).send({ message: 'forbidden access' })
+            }
             const query = {};
             const users = await usersCollection.find(query).toArray();
             res.send(users)
@@ -162,6 +167,14 @@ async function run() {
 
         app.post('/users', async (req, res) => {
             const user = req.body;
+            const query = { email: user.email };
+
+            const existingUser = await usersCollection.find(query).toArray();
+
+            if (existingUser.length) {
+                return res.send({ acknowledged: false })
+            }
+
 
             const result = await usersCollection.insertOne(user);
             res.send(result);
