@@ -218,6 +218,12 @@ async function run() {
             res.send(result);
         })
 
+        app.get('/doctors', async (req, res) => {
+            const query = {};
+            const doctors = await doctorsCollection.find(query).toArray();
+            res.send(doctors);
+        })
+
     }
     finally {
 
