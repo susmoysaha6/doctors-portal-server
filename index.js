@@ -109,6 +109,11 @@ async function run() {
             res.send(options);
         })
 
+        app.get('/appiontmentSpecialty', async (req, res) => {
+            const query = {}
+            const result = await appointmentOptionCollection.find(query).project({ name: 1 }).toArray();
+            res.send(result);
+        })
 
         app.get('/bookings', verifyJWT, async (req, res) => {
             const email = req.query.email;
